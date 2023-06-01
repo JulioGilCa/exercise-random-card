@@ -1,75 +1,102 @@
 function deckBuilder() {
-    const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",];
-    const suits = ["Hearts", "Diamonds", "Spades", "Clubs"];
-    const cards = [];
-    for (let s = 0; s < suits.length; s++) {
-        for (let v = 0; v < values.length; v++) {
-            const value = values[v];
-            const suit = suits[s];
-            cards.push({ value, suit });
-        }
-    }
-    return cards;
+  const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const suits = ["Hearts", "Diamonds", "Spades", "Clubs"];
+  const cards = [];
+
+  suits.forEach((suit) => {
+    values.forEach((value) => {
+      cards.push({ value, suit });
+    });
+  });
+
+  return cards;
 }
 
-function randomCard(cards) {
-    const random = Math.floor(Math.random() * 51);
-    const cardValue = cards[random].value;
-    const cardSuit = cards[random].suit;
-    let entity;
-    cardSuit === "Diamonds"
-        ? (entity = "&diams;")
-        : (entity = "&" + cardSuit.toLowerCase() + ";");
-    const card = document.createElement("div");
-    card.classList.add("card", cardSuit.toLowerCase());
-    card.innerHTML = '<span class="card-value-suit top">' + cardValue + entity + "</span>" + '<span class="card-suit">' + entity + "<p class='watermark'>JuliCode®</p></span>" + '<span class="card-value-suit bot">' + cardValue + entity + "</span>";
-    document.body.appendChild(card);
+// Obtén los elementos relevantes del DOM
+const timeLinks = document.querySelectorAll(".dropdown-menu a");
+const cardContainer = document.createElement("div");
+cardContainer.id = "cardContainer";
+document.body.appendChild(cardContainer);
+
+// Variables para controlar el intervalo y el estado del botón
+let intervalId = null;
+let selectedTime = 0;
+
+// Función para generar una nueva carta
+function generateNewCard(cards) {
+  const random = Math.floor(Math.random() * 51);
+  const cardValue = cards[random].value;
+  const cardSuit = cards[random].suit;
+  let suitpict; cardSuit === "Diamonds" ? (suitpict = "&diams;") : (suitpict = "&" + cardSuit.toLowerCase() + ";");
+  const card = document.createElement("div");
+  card.classList.add("card", cardSuit.toLowerCase());
+  card.innerHTML = '<span class="card-value-suit top">' + cardValue + suitpict + "</span>" + '<span class="card-suit">' +
+    suitpict + "<p class='watermark'>JuliCode®</p></span>" + '<span class="card-value-suit bot">' + cardValue +
+    suitpict + "</span>";
+  cardContainer.innerHTML = ""; // Eliminar cartas anteriores
+  cardContainer.appendChild(card);
 }
+
+// Función para iniciar el intervalo
+function startInterval(time) {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
+  intervalId = setInterval(function () {
+    const cards = deckBuilder();
+    generateNewCard(cards);
+  }, time);
+}
+
+// Función para detener el intervalo
+function stopInterval() {
+  clearInterval(intervalId);
+  intervalId = null;
+}
+
+// Función para regenerar la carta al hacer clic en el botón "Regenerate"
+function regenerateCard() {
+  const cards = deckBuilder();
+  generateNewCard(cards);
+  stopInterval();
+}
+
+// Agrega el evento de clic a las opciones de tiempo
+for (let i = 0; i < timeLinks.length; i++) {
+  timeLinks[i].addEventListener("click", function (e) {
+    e.preventDefault();
+    const time = parseInt(this.getAttribute("data-time")) * 1000; // Convertir el tiempo a milisegundos
+    selectedTime = time;
+    startInterval(time);
+  });
+}
+
+// Crear contenedor para el botón "Regenerate"
+const buttonContainer = document.createElement("div");
+buttonContainer.id = "buttonContainer";
+document.body.appendChild(buttonContainer);
+
+// Crear botón "Regenerate" dentro del contenedor
+const regenerateButton = document.createElement("button");
+regenerateButton.textContent = "Regenerate";
+regenerateButton.addEventListener("click", regenerateCard);
+buttonContainer.appendChild(regenerateButton);
+buttonContainer.style.position = "fixed";
+buttonContainer.style.bottom = "200px";
+
+// Al cargar la página, iniciar el intervalo con el valor predeterminado (3 segundos)
+const defaultTime = 10000; // 3 segundos
+selectedTime = defaultTime;
+startInterval(defaultTime);
+
 const cards = deckBuilder();
-randomCard(cards);
+generateNewCard(cards);
 
-function changeCardColor() {
-    let colorMenu = document.getElementById("colorMenu");
-  
-    if (!colorMenu) {
-      colorMenu = document.createElement("div");
-      colorMenu.id = "colorMenu";
-      colorMenu.innerHTML = `
-        <ul>
-          <li><button onclick="changeColor('blue')">Azul</button></li>
-          <li><button onclick="changeColor('green')">Verde</button></li>
-          <li><button onclick="changeColor('purple')">Violeta</button></li>
-          <li><button onclick="changeColor('grey')">Gris</button></li>
-        </ul>
-      `;
-      document.body.appendChild(colorMenu);
-    } else {
-      colorMenu.remove();
-    }
-  }
-  
-  function changeColor(color) {
+// Cambio de color de fondo
+const colorButtons = document.querySelectorAll('.color-button');
+colorButtons.forEach(button => {
+  button.addEventListener('click', function () {
+    const color = this.getAttribute('data-color');
     document.body.style.backgroundColor = color;
-    // Almacena el color seleccionado en una cookie
-    document.cookie = `backgroundColor=${color}; expires=Fri, 31 Dec 9999 23:59:59 GMT`;
-  }
-  
-  function getSavedColor() {
-    const cookies = document.cookie.split(";").map(cookie => cookie.trim());
-    for (const cookie of cookies) {
-      if (cookie.startsWith("backgroundColor=")) {
-        const color = cookie.substring("backgroundColor=".length);
-        document.body.style.backgroundColor = color;
-        break;
-      }
-    }
-  }
-  
-  const colorButton = document.createElement("button");
-  colorButton.textContent = "Cambiar color";
-  colorButton.addEventListener("click", changeCardColor);
-  document.body.appendChild(colorButton);
-  
-  // Recupera el color seleccionado al cargar la página
-  getSavedColor();
-  
+  });
+});
